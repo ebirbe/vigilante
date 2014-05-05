@@ -29,30 +29,52 @@ def get_packages_info(path):
 	
 	packages={}
 	
-	print "Reading \"%s\" file..." % os.path.basename(path)
+	#print "Reading \"%s\" file..." % os.path.basename(path)
 	try:
 		paragraphs = deb822.Packages.iter_paragraphs(gzip.open(path))
 	except IOError, e:
-		print "Could not read %s file, error %s." % (path, e)
+		#print "Could not read %s file, error %s." % (path, e)
 		return None
 	else:
 		for paragraph in paragraphs:
 			name = paragraph['Package']
 			info = paragraph
 			packages[name] = info
-		print "%i package(s) readed." % len(packages)
+		#print "%i package(s) readed." % len(packages)
 		
 	return packages
-	
+
+def format_output(data, f=None):
+	'''
+	Arguments:
+	- data: A tuple with this format (type_change, old_data,
+	new_data)
+	'''
+	output = None
+	t, old, new = data
+	if f:
+		pass
+	else:
+		output = "%s\t%s\t%s\t%s" % (t,
+		    new['Package'],
+		    old['Version'],
+	            new['Version'])
+
+	return output
+
 def compare_packages(old, new):
-	for package in new_packages:
+	'''
+	'''
+	for package in new:
+		data = None
 		try:
-			if new_packages[package]['md5sum'] != old_packages[package]['md5sum']:
-				print "C: %s from %s to %s" % (package,
-				    old_packages[package]['Version'],
-				    new_packages[package]['Version'])
+			if new[package]['md5sum'] != old[package]['md5sum']:
+				data = ('C', new[package], old[package])
 		except KeyError, e:
-			print "N: %s" % package
+			data = ('N', new[package], new[package])
+
+		if data:
+			print format_output(data)
 
 if __name__ == "__main__":
 	
