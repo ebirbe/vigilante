@@ -19,42 +19,49 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gzip
+import os
+import sys
 from debian import deb822
 
-if __name__=="__main__":
+def get_packages_info(path):
+	'''
+	'''
 	
-	path_old="./cache/Packages_testing.gz"
-	print "Leyendo paquetes actuales..."
+	packages={}
+	
+	print "Reading \"%s\" file..." % os.path.basename(path)
 	try:
-		old_paragraphs = deb822.Packages.iter_paragraphs(gzip.open(path_old))
+		paragraphs = deb822.Packages.iter_paragraphs(gzip.open(path))
 	except IOError, e:
-		print "No se pudo leer el archivo %s, error %s" % (path, e)
+		print "Could not read %s file, error %s." % (path, e)
+		return None
 	else:
-		old_packages={}
-		for paragraph in old_paragraphs:
+		for paragraph in paragraphs:
 			name = paragraph['Package']
 			info = paragraph
-			old_packages[name] = info
-		print "Se leyeron %i paquetes" % len(old_packages)
-
-	path_new="./cache/Packages_unstable.gz"
-	print "Leyendo paquetes nuevos..."
-	try:
-		new_paragraphs = deb822.Packages.iter_paragraphs(gzip.open(path_new))
-	except IOError, e:
-		print "No se pudo leer el archivo %s, error %s" % (path, e)
-	else:
-		new_packages={}
-		for paragraph in new_paragraphs:
-			name = paragraph['Package']
-			info = paragraph
-			new_packages[name] = info
-		print "Se leyeron %i paquetes" % len(new_packages)
+			packages[name] = info
+		print "%i package(s) readed." % len(packages)
 		
-		
+	return packages
+	
+def compare_packages(old, new):
 	for package in new_packages:
 		try:
 			if new_packages[package]['md5sum'] != old_packages[package]['md5sum']:
-				print "%s ha cambiado de %s a %s." % (package, old_packages[package]['Version'], new_packages[package]['Version'])
+				print "C: %s from %s to %s" % (package,
+				    old_packages[package]['Version'],
+				    new_packages[package]['Version'])
 		except KeyError, e:
-			print "%s es nuevo." % package
+			print "N: %s" % package
+
+if __name__ == "__main__":
+	
+	# FIXME: Test Files, it will be changed to automated paths.
+	path_old = "./cache/Packages_kerepakupai.gz"
+	path_new = "./cache/Packages_kukenan.gz"
+	
+	# TODO: Use threads if it's possible, to reduce processing time.
+	old_packages = get_packages_info(path_old)
+	new_packages = get_packages_info(path_new)
+
+	compare_packages(old_packages, new_packages)
