@@ -4,6 +4,13 @@
 # Configurations for Vigilante.
 #
 
+#
+CACHE_DIR = "./cache/"
+
+#
+OUTPUT = "./output/"
+
+#
 COMPARE_REPOS = [
 #    (
 #        "http://security.debian.org/debian-security/ stable/updates main contrib non-free",
@@ -15,8 +22,4 @@ COMPARE_REPOS = [
         "http://repositorio.canaima.softwarelibre.gob.ve/ kukenan usuarios aportes no-libres",
         ("i386","amd64")
     ),
-
-
 ]
-
-CACHE_DIR = "./cache/"

@@ -22,10 +22,11 @@ import os
 import re
 import sys
 import urllib, urllib2
-
 from debian import deb822
+from datetime import datetime
 
-from config import COMPARE_REPOS, CACHE_DIR
+# Local Imports
+import config
 
 def download_file(url, filename):
     '''
@@ -80,16 +81,19 @@ def format_output(data, f=None):
 def compare_packages(old, new):
     '''
     '''
+    data = []
     for package in new:
-        data = None
         try:
             if new[package]['md5sum'] != old[package]['md5sum']:
-                data = ('C', new[package], old[package])
+                x = ('C', new[package], old[package])
+                data.append(x)
         except KeyError, e:
-            data = ('N', new[package], new[package])
-
-        if data:
-            print format_output(data)
+            x = ('N', new[package], new[package])
+            data.append(x)
+    return data
+            
+def plain_time_now():
+    return datetime.now().strftime("%Y%m%d%M%H%M%SUTC")
 
 class Repo:
     '''
@@ -116,7 +120,7 @@ class Repo:
         '''
         local_name = "_".join([self.branch, component, arch])
         repo_dir = re.sub(r'(http|ftp|file|ssh)://|/$', "", self.repo)
-        return os.path.join(CACHE_DIR, repo_dir,local_name + ".gz")
+        return os.path.join(config.CACHE_DIR, repo_dir,local_name + ".gz")
 
     def get_packages_gz(self):
         '''
@@ -168,6 +172,17 @@ class Repo:
             info = paragraph
             packages[name] = info
         return packages
+        
+    def write_data(self, data):
+        '''
+        '''
+        out_file_basename = "%s.log" % plain_time_now()
+        out_file_path = os.path.join(config.OUTPUT, out_file_basename)
+        with open(out_file_path, "w") as f:
+            lines = []
+            for line in data:
+                lines.append(format_output(line) + os.linesep)
+            f.writelines(lines)
 
     def compare(self, repo_obj):
         '''
@@ -181,16 +196,14 @@ class Repo:
                 comp2 = repo_obj.components[i]
                 old_packages = self.get_packages_info(comp, arch)
                 new_packages = repo_obj.get_packages_info(comp2, arch)
-                #~ print "===%s===%s===%s===%s===" % (self.repo, self.branch, comp, arch)
-                #~ print "===%s===%s===%s===%s===" % (repo_obj.repo, repo_obj.branch, comp2, arch)
-                compare_packages(old_packages, new_packages)
-
+                data = compare_packages(old_packages, new_packages)
+                if data:
+                    self.write_data(data)
 
 if __name__ == "__main__":
     '''
     '''
-    for data in COMPARE_REPOS:
+    for data in config.COMPARE_REPOS:
         r_old = Repo(data[0], data[2])
         r_new = Repo(data[1], data[2])
-
         r_old.compare(r_new)
